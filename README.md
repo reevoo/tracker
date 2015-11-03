@@ -1,7 +1,9 @@
-Tracking
-========
+Tracker
+=======
 
-This is an API used for all tracking events at Reevoo.
+[![Build Status](https://travis-ci.org/reevoo/tracker.svg?branch=master)](https://travis-ci.org/reevoo/tracker)
+
+This is an API used for tracking events at Reevoo.
 
 Setup
 -----
