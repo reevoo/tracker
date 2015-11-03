@@ -29,8 +29,20 @@ var _ = Describe("Server", func() {
 
 	Describe("GET /status", func() {
 
+		var (
+			response *httptest.ResponseRecorder
+		)
+
+		BeforeEach(func() {
+			response = get(server, "/status")
+		})
+
 		It("returns HTTP Status 200", func() {
-			Expect(get(server, "/status").Code).To(Equal(200))
+			Expect(response.Code).To(Equal(200))
+		})
+
+		It("returns a string", func() {
+			Expect(response.Body.String()).NotTo(BeEmpty())
 		})
 
 	})
