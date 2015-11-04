@@ -60,7 +60,7 @@ var _ = Describe("Server", func() {
 			Expect(response.Code).To(Equal(200))
 		})
 
-		It("sends a request to DynamoDB when JSON is correct", func() {
+		PIt("sends a request to DynamoDB when JSON is correct", func() {
 			response = post(&server, "/event", validRequestJson)
 		})
 
@@ -79,7 +79,7 @@ var _ = Describe("Server", func() {
 			Expect(response.Code).To(Equal(400))
 		})
 
-		It("tracks an error when the DynamoDB request fails", func() {
+		PIt("tracks an error when the DynamoDB request fails", func() {
 			response = post(&server, "/event", validRequestJson)
 
 			Eventually(func() TrackerError {
