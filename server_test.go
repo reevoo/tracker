@@ -1,6 +1,7 @@
 package tracker_test
 
 import (
+	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/reevoo/tracker"
@@ -14,7 +15,18 @@ type TestErrorLogger struct {
 
 // Logs an error to an exposed array.
 func (errorLogger TestErrorLogger) LogError(err TrackerError) {
+	fmt.Print(err.Name)
 	errorLogger.LastError = err
+}
+
+// Stores a single event for testing.
+type TestEventStore struct {
+	LastEvent Event
+}
+
+// Stores an event.
+func (store TestEventStore) Store(event Event) {
+	store.LastEvent = event
 }
 
 var _ = Describe("Server", func() {
@@ -23,10 +35,14 @@ var _ = Describe("Server", func() {
 		server   Server
 		response *httptest.ResponseRecorder
 		errors   = TestErrorLogger{}
+		store    = TestEventStore{}
 	)
 
 	BeforeEach(func() {
-		server = NewServer(errors)
+		server = NewServer(ServerParams{
+			ErrorLogger: errors,
+			EventStore:  store,
+		})
 	})
 
 	Describe("GET /status", func() {

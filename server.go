@@ -29,14 +29,21 @@ func (event Event) ToJson() string {
 type Server struct {
 	engine      *gin.Engine
 	errorLogger ErrorLogger
+	eventStore  EventStore
+}
+
+// Parameters passed to NewServer().
+type ServerParams struct {
+	ErrorLogger ErrorLogger
+	EventStore  EventStore
 }
 
 // Create a new Server.
-// Leave errorLogger as nil to
-func NewServer(errorLogger ErrorLogger) Server {
+func NewServer(params ServerParams) Server {
 	server := Server{
 		engine:      gin.Default(),
-		errorLogger: errorLogger,
+		errorLogger: params.ErrorLogger,
+		eventStore:  params.EventStore,
 	}
 
 	// Build the engine
@@ -88,7 +95,7 @@ func (server Server) postEvent(context *gin.Context) {
 		// We return the HTTP request quickly
 		// and process the event in the background.
 		// TODO: This does nothing yet!
-		go func() {}()
+		go server.eventStore.Store(event)
 		context.String(http.StatusOK, "")
 	}
 }

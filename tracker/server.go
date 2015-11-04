@@ -21,9 +21,9 @@ func init() {
 func main() {
 	go exitOnInterrupt()
 
-	server := NewServer(
-		SentryErrorLogger{},
-	)
+	server := NewServer(ServerParams{
+		errorLogger: SentryErrorLogger{},
+	})
 
 	server.Run(":3000")
 }
