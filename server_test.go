@@ -2,6 +2,7 @@ package tracker_test
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -34,7 +35,7 @@ var _ = Describe("Server", func() {
 	)
 
 	BeforeEach(func() {
-		server = CreateServer()
+		server = NewTrackerEngine()
 	})
 
 	Describe("GET /status", func() {
@@ -60,12 +61,14 @@ var _ = Describe("Server", func() {
 	Describe("POST /event", func() {
 
 		var (
-			response         *httptest.ResponseRecorder
-			validRequestJson string
+			response            *httptest.ResponseRecorder
+			validRequestJson    string
+			requestsPerSecond = 1000
 		)
 
 		BeforeEach(func() {
 			validRequestJson = Event{Name: "EventName", Metadata: make(map[string]interface{})}.ToJson()
+			Errors.Clear()
 		})
 
 		It("returns HTTP 200", func() {
@@ -95,9 +98,19 @@ var _ = Describe("Server", func() {
 		It("tracks an error when the DynamoDB request fails", func() {
 			response = post(server, "/event", validRequestJson)
 
-			Eventually(func() map[string]interface{} {
-				return Errors
-			}).Should(HaveLen(1))
+			Eventually(func() int {
+				return Errors.Count()
+			}).Should(Equal(1))
+		})
+
+		It(fmt.Sprintf("can handle %d requests in 1 second", requestsPerSecond), func() {
+			for i := 0; i < requestsPerSecond; i++ {
+				go post(server, "/event", validRequestJson)
+			}
+
+			Eventually(func() int {
+				return Errors.Count()
+			}).Should(Equal(requestsPerSecond))
 		})
 	})
 

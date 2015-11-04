@@ -22,7 +22,7 @@ func postEventToDynamoDB(event Event) {
 	})
 }
 
-func CreateServer() *gin.Engine {
+func NewTrackerEngine() *gin.Engine {
 	routes := gin.Default()
 
 	routes.Use(Recovery())
