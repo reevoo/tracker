@@ -1,32 +1,36 @@
 package main
 
 import (
-	. "github.com/reevoo/tracker"
 	"github.com/getsentry/raven-go"
+	. "github.com/reevoo/tracker"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
 var (
-	dynamoUri            = os.Getenv("DYNAMODB_URI")
-	Term       os.Signal = syscall.SIGTERM
+	dynamoUri           = os.Getenv("DYNAMODB_URI")
+	Term      os.Signal = syscall.SIGTERM
 )
 
 func init() {
-  raven.SetDSN(os.Getenv("SENTRY_DSN"))
-  raven.SetRelease(os.Getenv("SENTRY_RELEASE"))
+	raven.SetDSN(os.Getenv("SENTRY_DSN"))
+	raven.SetRelease(os.Getenv("SENTRY_RELEASE"))
 }
 
 func main() {
+	go exitOnInterrupt()
 
-	go func() {
-		sigchan := make(chan os.Signal, 10)
-		signal.Notify(sigchan, os.Interrupt, os.Kill, Term)
-		<-sigchan
-		os.Exit(0)
-	}()
+	server := NewServer(
+		SentryErrorLogger{},
+	)
 
-	routes := CreateServer()
-	routes.Run(":3000")
+	server.Run(":3000")
+}
+
+func exitOnInterrupt() {
+	sigchan := make(chan os.Signal, 10)
+	signal.Notify(sigchan, os.Interrupt, os.Kill, Term)
+	<-sigchan
+	os.Exit(0)
 }

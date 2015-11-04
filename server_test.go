@@ -1,50 +1,37 @@
 package tracker_test
 
 import (
-	"bytes"
-	"github.com/gin-gonic/gin"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/reevoo/tracker"
-	"net/http"
 	"net/http/httptest"
 )
 
-func get(server *gin.Engine, url string) *httptest.ResponseRecorder {
-	req, _ := http.NewRequest("GET", url, nil)
-	resp := httptest.NewRecorder()
-	server.ServeHTTP(resp, req)
-
-	return resp
+// Logs errors to an exposed array.
+type TestErrorLogger struct {
+	LastError TrackerError
 }
 
-func post(server *gin.Engine, url string, body string) *httptest.ResponseRecorder {
-	bodyReader := bytes.NewBufferString(body)
-	req, _ := http.NewRequest("POST", url, bodyReader)
-	resp := httptest.NewRecorder()
-	server.ServeHTTP(resp, req)
-
-	return resp
+// Logs an error to an exposed array.
+func (errorLogger TestErrorLogger) LogError(err TrackerError) {
+	errorLogger.LastError = err
 }
 
 var _ = Describe("Server", func() {
 
 	var (
-		server *gin.Engine
+		server   Server
+		response *httptest.ResponseRecorder
+		errors   = TestErrorLogger{}
 	)
 
 	BeforeEach(func() {
-		server = CreateServer()
+		server = NewServer(errors)
 	})
 
 	Describe("GET /status", func() {
-
-		var (
-			response *httptest.ResponseRecorder
-		)
-
 		BeforeEach(func() {
-			response = get(server, "/status")
+			response = get(&server, "/status")
 		})
 
 		It("returns HTTP Status 200", func() {
@@ -69,35 +56,35 @@ var _ = Describe("Server", func() {
 		})
 
 		It("returns HTTP 200", func() {
-			response = post(server, "/event", validRequestJson)
+			response = post(&server, "/event", validRequestJson)
 			Expect(response.Code).To(Equal(200))
 		})
 
 		It("sends a request to DynamoDB when JSON is correct", func() {
-			response = post(server, "/event", validRequestJson)
+			response = post(&server, "/event", validRequestJson)
 		})
 
 		It("return HTTP 200 when the event does not have metadata", func() {
-			response = post(server, "/event", Event{Name: "EventName", Metadata: nil}.ToJson())
+			response = post(&server, "/event", Event{Name: "EventName", Metadata: nil}.ToJson())
 			Expect(response.Code).To(Equal(200))
 		})
 
 		It("returns HTTP 400 when the event is not JSON", func() {
-			response = post(server, "/event", "Definitely Not JSON!")
+			response = post(&server, "/event", "Definitely Not JSON!")
 			Expect(response.Code).To(Equal(400))
 		})
 
 		It("returns HTTP 400 when the event does not have a name", func() {
-			response = post(server, "/event", Event{Name: "", Metadata: make(map[string]interface{})}.ToJson())
+			response = post(&server, "/event", Event{Name: "", Metadata: make(map[string]interface{})}.ToJson())
 			Expect(response.Code).To(Equal(400))
 		})
 
 		It("tracks an error when the DynamoDB request fails", func() {
-			response = post(server, "/event", validRequestJson)
+			response = post(&server, "/event", validRequestJson)
 
-			Eventually(func() map[string]interface{} {
-				return Errors
-			}).Should(HaveLen(1))
+			Eventually(func() TrackerError {
+				return errors.LastError
+			}).ShouldNot(BeNil())
 		})
 	})
 
