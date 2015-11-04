@@ -1,13 +1,13 @@
 package tracker_test
 
 import (
-	. "github.com/reevoo/tracker"
+	"bytes"
+	"github.com/gin-gonic/gin"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/gin-gonic/gin"
+	. "github.com/reevoo/tracker"
 	"net/http"
 	"net/http/httptest"
-	"bytes"
 )
 
 func get(server *gin.Engine, url string) *httptest.ResponseRecorder {
@@ -30,7 +30,7 @@ func post(server *gin.Engine, url string, body string) *httptest.ResponseRecorde
 var _ = Describe("Server", func() {
 
 	var (
-		server  *gin.Engine
+		server *gin.Engine
 	)
 
 	BeforeEach(func() {
@@ -74,27 +74,27 @@ var _ = Describe("Server", func() {
 		})
 
 		It("sends a request to DynamoDB when JSON is correct", func() {
-			response = post(server, "/event", validRequestJson)	
+			response = post(server, "/event", validRequestJson)
 		})
 
 		It("return HTTP 200 when the event does not have metadata", func() {
-			response = post(server, "/event", Event{Name: "EventName", Metadata: nil}.ToJson())	
+			response = post(server, "/event", Event{Name: "EventName", Metadata: nil}.ToJson())
 			Expect(response.Code).To(Equal(200))
 		})
 
 		It("returns HTTP 400 when the event is not JSON", func() {
-			response = post(server, "/event", "Definitely Not JSON!")	
-			Expect(response.Code).To(Equal(400))			
+			response = post(server, "/event", "Definitely Not JSON!")
+			Expect(response.Code).To(Equal(400))
 		})
 
 		It("returns HTTP 400 when the event does not have a name", func() {
-			response = post(server, "/event", Event{Name: "", Metadata: make(map[string]interface{})}.ToJson())	
+			response = post(server, "/event", Event{Name: "", Metadata: make(map[string]interface{})}.ToJson())
 			Expect(response.Code).To(Equal(400))
 		})
 
 		It("tracks an error when the DynamoDB request fails", func() {
 			response = post(server, "/event", validRequestJson)
-			
+
 			Eventually(func() map[string]interface{} {
 				return Errors
 			}).Should(HaveLen(1))

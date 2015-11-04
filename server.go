@@ -1,14 +1,14 @@
 package tracker
 
 import (
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"encoding/json"
 )
 
 type Event struct {
-    Name     string                 `json:"name" binding:"required"`
-    Metadata map[string]interface{} `json:"metadata"`
+	Name     string                 `json:"name" binding:"required"`
+	Metadata map[string]interface{} `json:"metadata"`
 }
 
 func (event Event) ToJson() string {
@@ -23,9 +23,9 @@ func postEventToDynamoDB(event Event) {
 }
 
 func CreateServer() *gin.Engine {
-    routes := gin.Default()
+	routes := gin.Default()
 
-    routes.Use(Recovery())
+	routes.Use(Recovery())
 
 	routes.GET("/status", func(context *gin.Context) {
 		context.String(http.StatusOK, "I AM ALIVE")
@@ -35,10 +35,10 @@ func CreateServer() *gin.Engine {
 		// Ensure the JSON is valid before returning
 		var event Event
 		err := context.BindJSON(&event)
-		if(err == nil) {
+		if err == nil {
 			go postEventToDynamoDB(event)
 			context.String(http.StatusOK, "")
-		}		
+		}
 	})
 
 	return routes

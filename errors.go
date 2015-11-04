@@ -9,12 +9,12 @@ import (
 
 // Naughty global variable for storing logged errors
 var Errors = make(map[string]interface{})
-var env    = os.Getenv("GO_ENV")
+var env = os.Getenv("GO_ENV")
 
 // Track an error internally.
 // This should be used instead of panicking!
 func TrackError(error interface{}, name string, meta map[string]string) {
-	if(env == "PROD") {
+	if env == "PROD" {
 		// Post to Sentry if on production
 		trackErrorWithSentry(error, name, meta)
 	} else {
@@ -22,7 +22,6 @@ func TrackError(error interface{}, name string, meta map[string]string) {
 		trackErrorLocally(error, name, meta)
 	}
 }
-
 
 func trackErrorWithSentry(err interface{}, name string, meta map[string]string) {
 	meta["name"] = name
