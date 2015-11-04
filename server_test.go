@@ -1,32 +1,13 @@
 package tracker_test
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/reevoo/tracker"
-	"net/http"
 	"net/http/httptest"
 )
-
-func get(server *gin.Engine, url string) *httptest.ResponseRecorder {
-	req, _ := http.NewRequest("GET", url, nil)
-	resp := httptest.NewRecorder()
-	server.ServeHTTP(resp, req)
-
-	return resp
-}
-
-func post(server *gin.Engine, url string, body string) *httptest.ResponseRecorder {
-	bodyReader := bytes.NewBufferString(body)
-	req, _ := http.NewRequest("POST", url, bodyReader)
-	resp := httptest.NewRecorder()
-	server.ServeHTTP(resp, req)
-
-	return resp
-}
 
 var _ = Describe("Server", func() {
 
@@ -35,7 +16,8 @@ var _ = Describe("Server", func() {
 	)
 
 	BeforeEach(func() {
-		server = NewTrackerEngine()
+		server = TestTrackerEngine()
+		gin.SetMode(gin.ReleaseMode)
 	})
 
 	Describe("GET /status", func() {
@@ -61,14 +43,15 @@ var _ = Describe("Server", func() {
 	Describe("POST /event", func() {
 
 		var (
-			response            *httptest.ResponseRecorder
-			validRequestJson    string
-			requestsPerSecond = 1000
+			response           *httptest.ResponseRecorder
+			validRequestJson   string
+			failingRequestJson string
+			requestsPerSecond  = 1000
 		)
 
 		BeforeEach(func() {
 			validRequestJson = Event{Name: "EventName", Metadata: make(map[string]interface{})}.ToJson()
-			Errors.Clear()
+			failingRequestJson = Event{Name: "fail", Metadata: make(map[string]interface{})}.ToJson()
 		})
 
 		It("returns HTTP 200", func() {
@@ -95,23 +78,32 @@ var _ = Describe("Server", func() {
 			Expect(response.Code).To(Equal(400))
 		})
 
-		It("tracks an error when the DynamoDB request fails", func() {
-			response = post(server, "/event", validRequestJson)
+		Describe("Errors", func() {
 
-			Eventually(func() int {
-				return Errors.Count()
-			}).Should(Equal(1))
+			It("tracks an error when the DynamoDB request fails", func() {
+				response = post(server, "/event", failingRequestJson)
+
+				Eventually(func() int {
+					return Errors.Count()
+				}).Should(Equal(1))
+
+				Errors.Clear()
+			})
+
 		})
 
-		It(fmt.Sprintf("can handle %d requests in 1 second", requestsPerSecond), func() {
-			for i := 0; i < requestsPerSecond; i++ {
-				go post(server, "/event", validRequestJson)
-			}
+		Measure(fmt.Sprintf("can handle %d requests simultaneously", requestsPerSecond), func(bm Benchmarker) {
+			runtime := bm.Time(fmt.Sprintf("%d simultaneous requests", requestsPerSecond), func() {
+				for i := 0; i < requestsPerSecond; i++ {
+					go func() {
+						response := post(server, "/event", validRequestJson)
+						Expect(response.Code).To(Equal(200))
+					}()
+				}
+			})
 
-			Eventually(func() int {
-				return Errors.Count()
-			}).Should(Equal(requestsPerSecond))
-		})
+			Expect(runtime.Seconds()).To(BeNumerically("<", 1))
+		}, 10)
 	})
 
 })

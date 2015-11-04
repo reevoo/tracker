@@ -17,16 +17,33 @@ func (event Event) ToJson() string {
 }
 
 func postEventToDynamoDB(event Event) {
-	TrackError(nil, "PostFailed", map[string]string{
-		"event": event.ToJson(),
-	})
+
+	// FIXME: Used in testing...
+	if event.Name == "fail" {
+		TrackError(nil, "PostFailed", map[string]string{
+			"event": event.ToJson(),
+		})
+	}
+
 }
 
 func NewTrackerEngine() *gin.Engine {
 	routes := gin.Default()
-
 	routes.Use(Recovery())
 
+	addRoutes(routes)
+
+	return routes
+}
+
+func TestTrackerEngine() *gin.Engine {
+	routes := gin.New()
+	addRoutes(routes)
+
+	return routes
+}
+
+func addRoutes(routes *gin.Engine) {
 	routes.GET("/status", func(context *gin.Context) {
 		context.String(http.StatusOK, "I AM ALIVE")
 	})
@@ -40,6 +57,4 @@ func NewTrackerEngine() *gin.Engine {
 			context.String(http.StatusOK, "")
 		}
 	})
-
-	return routes
 }
