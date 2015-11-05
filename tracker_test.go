@@ -2,6 +2,7 @@ package tracker_test
 
 import (
 	"bytes"
+	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/reevoo/tracker"
@@ -9,6 +10,12 @@ import (
 	"net/http/httptest"
 	"testing"
 )
+
+func init() {
+	// Disable verbose logging on Test.
+	fmt.Print("NOTE: Verbose logging is disabled on test.\nTo change this, go to `tracker_test.go`.\n\n")
+	SetServerMode("release")
+}
 
 // Performs a GET request.
 func get(server *Server, url string) *httptest.ResponseRecorder {

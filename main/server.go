@@ -9,11 +9,17 @@ import (
 
 var (
 	dynamoUri           = os.Getenv("DYNAMODB_URI")
+	env                 = os.Getenv("GO_ENV")
 	Term      os.Signal = syscall.SIGTERM
 )
 
 func main() {
 	go exitOnInterrupt()
+
+	// Release mode reduces the amount of logging.
+	if env == "production" {
+		SetServerMode("release")
+	}
 
 	server := NewServer(ServerParams{
 		EventStore:  DynamoDBEventStore{},

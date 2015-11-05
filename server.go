@@ -32,10 +32,25 @@ type ServerParams struct {
 	EventStore  EventStore
 }
 
+func SetServerMode(mode string) {
+	gin.SetMode(mode)
+}
+
 // Create a new Server.
 func NewServer(params ServerParams) Server {
+	return initServer(gin.Default(), params)
+}
+
+// Creates a new Server that does no logging.
+// Handy in testing.
+func NewSilentServer(params ServerParams) Server {
+	engine := gin.New()
+	return initServer(engine, params)
+}
+
+func initServer(engine *gin.Engine, params ServerParams) Server {
 	server := Server{
-		engine:      gin.Default(),
+		engine:      engine,
 		errorLogger: params.ErrorLogger,
 		eventStore:  params.EventStore,
 	}
