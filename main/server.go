@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/getsentry/raven-go"
 	. "github.com/reevoo/tracker"
 	"os"
 	"os/signal"
@@ -12,11 +11,6 @@ var (
 	dynamoUri           = os.Getenv("DYNAMODB_URI")
 	Term      os.Signal = syscall.SIGTERM
 )
-
-func init() {
-	raven.SetDSN(os.Getenv("SENTRY_DSN"))
-	raven.SetRelease(os.Getenv("SENTRY_RELEASE"))
-}
 
 func main() {
 	go exitOnInterrupt()

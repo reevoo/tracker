@@ -3,7 +3,13 @@ package tracker
 import (
 	"fmt"
 	"github.com/getsentry/raven-go"
+	"os"
 )
+
+func init() {
+	raven.SetDSN(os.Getenv("SENTRY_DSN"))
+	raven.SetRelease(os.Getenv("SENTRY_RELEASE"))
+}
 
 // An unrecoverable error in Tracker.
 type TrackerError struct {
