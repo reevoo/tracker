@@ -1,37 +1,61 @@
 package tracker
 
 import (
-	"errors"
 	"fmt"
 	"github.com/getsentry/raven-go"
 	"os"
 )
 
-// Naughty global variable for storing logged errors
-var Errors = make(map[string]interface{})
-var env = os.Getenv("GO_ENV")
+func init() {
+	raven.SetDSN(os.Getenv("SENTRY_DSN"))
+	raven.SetRelease(os.Getenv("SENTRY_RELEASE"))
+}
 
-// Track an error internally.
-// This should be used instead of panicking!
-func TrackError(error interface{}, name string, meta map[string]string) {
-	if env == "PROD" {
-		// Post to Sentry if on production
-		trackErrorWithSentry(error, name, meta)
-	} else {
-		// Add to Errors if not
-		trackErrorLocally(error, name, meta)
+// An unrecoverable error in Tracker.
+type TrackerError struct {
+	Name    string
+	Context map[string]string
+}
+
+// Returns the error description in full.
+func (err TrackerError) Error() string {
+	return err.Name
+}
+
+// Convert a Go error into a TrackerError.
+func NewTrackerErrorFromError(err error, Context map[string]string) TrackerError {
+	return TrackerError{
+		Name: err.Error(),
 	}
 }
 
-func trackErrorWithSentry(err interface{}, name string, meta map[string]string) {
-	meta["name"] = name
-
-	errStr := fmt.Sprint(err)
-	packet := raven.NewPacket(errStr, raven.NewException(errors.New(errStr), raven.NewStacktrace(2, 3, nil)))
-	raven.Capture(packet, meta)
+// Convert a TrackerError to a Map.
+// Useful for JSON-based error logging due to its hierarchy.
+func (err TrackerError) ToMap() map[string]string {
+	all := err.Context
+	all["name"] = err.Name
+	return all
 }
 
-func trackErrorLocally(err interface{}, name string, meta map[string]string) {
-	Errors[name] = err
-	fmt.Printf("[ERROR] %s: %s", name, err)
+// EventLoggers keep a log of errors.
+type ErrorLogger interface {
+	LogError(err TrackerError)
+}
+
+// Sentry is used to log errors.
+type SentryErrorLogger struct{}
+
+// Logs an error to Sentry.
+func (SentryErrorLogger) LogError(err TrackerError) {
+	packet := raven.NewPacket(err.Error(), raven.NewException(err, raven.NewStacktrace(2, 3, nil)))
+	raven.Capture(packet, err.ToMap())
+}
+
+// Logs errors to the console.
+type ConsoleLogger struct{}
+
+// Logs an error to the console.
+func (ConsoleLogger) LogError(err TrackerError) {
+	fmt.Fprintln(os.Stderr, fmt.Sprintf("[ERROR] %s", err.Error()))
+
 }

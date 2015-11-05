@@ -1,50 +1,61 @@
 package tracker_test
 
 import (
-	"bytes"
-	"github.com/gin-gonic/gin"
+	"errors"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/reevoo/tracker"
-	"net/http"
 	"net/http/httptest"
 )
 
-func get(server *gin.Engine, url string) *httptest.ResponseRecorder {
-	req, _ := http.NewRequest("GET", url, nil)
-	resp := httptest.NewRecorder()
-	server.ServeHTTP(resp, req)
+// Testing flag to check if an error is thrown.
+var ErrorThrown = false
 
-	return resp
+// Implementation of ErrorLogger that flips ErrorThrown.
+type TestErrorLogger struct{}
+
+// Flips ErrorThrown.
+func (errorLogger TestErrorLogger) LogError(err TrackerError) {
+	ErrorThrown = true
 }
 
-func post(server *gin.Engine, url string, body string) *httptest.ResponseRecorder {
-	bodyReader := bytes.NewBufferString(body)
-	req, _ := http.NewRequest("POST", url, bodyReader)
-	resp := httptest.NewRecorder()
-	server.ServeHTTP(resp, req)
+// Testing flag to check if an Event is stored.
+var EventStored = false
 
-	return resp
+// Test implementation of EventStore.
+type TestEventStore struct {
+	ThrowError bool
+}
+
+// Flips EventStored.
+func (store TestEventStore) Store(event Event) error {
+	if store.ThrowError {
+		return errors.New("TestEventStoreTriggeredError")
+	}
+
+	EventStored = true
+	return nil
 }
 
 var _ = Describe("Server", func() {
 
 	var (
-		server *gin.Engine
+		server   Server
+		response *httptest.ResponseRecorder
+		errors   = TestErrorLogger{}
+		store    = TestEventStore{}
 	)
 
 	BeforeEach(func() {
-		server = CreateServer()
+		server = NewSilentServer(ServerParams{
+			ErrorLogger: &errors,
+			EventStore:  &store,
+		})
 	})
 
 	Describe("GET /status", func() {
-
-		var (
-			response *httptest.ResponseRecorder
-		)
-
 		BeforeEach(func() {
-			response = get(server, "/status")
+			response = get(&server, "/status")
 		})
 
 		It("returns HTTP Status 200", func() {
@@ -60,44 +71,60 @@ var _ = Describe("Server", func() {
 	Describe("POST /event", func() {
 
 		var (
-			response         *httptest.ResponseRecorder
-			validRequestJson string
+			response  *httptest.ResponseRecorder
+			event     Event
+			eventJson string
 		)
 
 		BeforeEach(func() {
-			validRequestJson = Event{Name: "EventName", Metadata: make(map[string]interface{})}.ToJson()
+			event = Event{
+				Name:     "EventName",
+				Metadata: make(map[string]interface{}),
+			}
+
+			eventJson = event.ToJson()
 		})
 
 		It("returns HTTP 200", func() {
-			response = post(server, "/event", validRequestJson)
+			response = post(&server, "/event", eventJson)
 			Expect(response.Code).To(Equal(200))
 		})
 
 		It("sends a request to DynamoDB when JSON is correct", func() {
-			response = post(server, "/event", validRequestJson)
+			EventStored = false
+
+			response = post(&server, "/event", eventJson)
+
+			Eventually(func() bool {
+				return EventStored
+			}).Should(BeTrue())
 		})
 
 		It("return HTTP 200 when the event does not have metadata", func() {
-			response = post(server, "/event", Event{Name: "EventName", Metadata: nil}.ToJson())
+			response = post(&server, "/event", Event{Name: "EventName", Metadata: nil}.ToJson())
 			Expect(response.Code).To(Equal(200))
 		})
 
 		It("returns HTTP 400 when the event is not JSON", func() {
-			response = post(server, "/event", "Definitely Not JSON!")
+			response = post(&server, "/event", "Definitely Not JSON!")
 			Expect(response.Code).To(Equal(400))
 		})
 
 		It("returns HTTP 400 when the event does not have a name", func() {
-			response = post(server, "/event", Event{Name: "", Metadata: make(map[string]interface{})}.ToJson())
+			response = post(&server, "/event", Event{Name: "", Metadata: make(map[string]interface{})}.ToJson())
 			Expect(response.Code).To(Equal(400))
 		})
 
 		It("tracks an error when the DynamoDB request fails", func() {
-			response = post(server, "/event", validRequestJson)
+			store.ThrowError = true
+			ErrorThrown = false
 
-			Eventually(func() map[string]interface{} {
-				return Errors
-			}).Should(HaveLen(1))
+			response = post(&server, "/event", eventJson)
+
+			Eventually(func() bool {
+				return ErrorThrown
+			}).Should(BeTrue())
+			store.ThrowError = false
 		})
 	})
 
