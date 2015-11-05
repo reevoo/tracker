@@ -20,7 +20,10 @@ func (errorLogger TestErrorLogger) LogError(err TrackerError) {
 }
 
 // Testing flag to check if an Event is stored.
-var EventStored = false
+var (
+	EventStored = false
+	LastEvent   *Event
+)
 
 // Test implementation of EventStore.
 type TestEventStore struct {
@@ -34,6 +37,7 @@ func (store TestEventStore) Store(event Event) error {
 	}
 
 	EventStored = true
+	LastEvent = &event
 	return nil
 }
 
@@ -77,10 +81,7 @@ var _ = Describe("Server", func() {
 		)
 
 		BeforeEach(func() {
-			event = Event{
-				Name:     "EventName",
-				Metadata: make(map[string]interface{}),
-			}
+			event = NewEvent("EventName", ExampleMetadata)
 
 			eventJson = event.ToJson()
 		})
@@ -100,8 +101,42 @@ var _ = Describe("Server", func() {
 			}).Should(BeTrue())
 		})
 
-		It("return HTTP 200 when the event does not have metadata", func() {
-			response = post(&server, "/event", Event{Name: "EventName", Metadata: nil}.ToJson())
+		It("creates an event with a UUID", func() {
+			LastEvent = nil
+
+			response = post(&server, "/event", eventJson)
+
+			Eventually(func() interface{} {
+				if LastEvent == nil {
+					return nil
+				}
+				return LastEvent.Id
+			}).ShouldNot(BeNil())
+		})
+
+		It("ignores any given UUID", func() {
+			LastEvent = nil
+
+			response = post(&server, "/event", eventJson)
+
+			Eventually(func() bool {
+				if LastEvent == nil {
+					return false
+				}
+
+				return LastEvent.Id != event.Id
+			}).Should(BeTrue())
+		})
+
+		It("returns HTTP 200 when the event does not have metadata", func() {
+			response = post(&server, "/event", NewEvent("EventName", nil).ToJson())
+			Expect(response.Code).To(Equal(200))
+		})
+
+		It("returns HTTP 200 when the event has metadata", func() {
+			event := NewEvent("EventName", ExampleMetadata)
+
+			response = post(&server, "/event", event.ToJson())
 			Expect(response.Code).To(Equal(200))
 		})
 
@@ -111,7 +146,7 @@ var _ = Describe("Server", func() {
 		})
 
 		It("returns HTTP 400 when the event does not have a name", func() {
-			response = post(&server, "/event", Event{Name: "", Metadata: make(map[string]interface{})}.ToJson())
+			response = post(&server, "/event", "{}")
 			Expect(response.Code).To(Equal(400))
 		})
 
