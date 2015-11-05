@@ -53,7 +53,16 @@ var _ = Describe("Event", func() {
 			event = NewEvent("TestEventName", nil)
 			input = event.ToDynamoDBItem()
 
-			Expect(input["Metadata"].M).To(BeNil())
+			Expect(input["Metadata"].M).To(Equal(map[string]*dynamodb.AttributeValue{}))
+		})
+
+		It("Parses a non-empty Metadata", func() {
+			event = NewEvent("TestEventName", ExampleMetadata)
+			input = event.ToDynamoDBItem()
+
+			// TODO: More specific testing of data types.
+
+			Expect(input["Metadata"].M).NotTo(BeNil())
 		})
 
 	})
