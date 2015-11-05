@@ -2,7 +2,6 @@ package tracker_test
 
 import (
 	"errors"
-	"github.com/nu7hatch/gouuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/reevoo/tracker"
@@ -23,7 +22,7 @@ func (errorLogger TestErrorLogger) LogError(err TrackerError) {
 // Testing flag to check if an Event is stored.
 var (
 	EventStored = false
-	LastEvent   Event
+	LastEvent   *Event
 )
 
 // Test implementation of EventStore.
@@ -38,7 +37,7 @@ func (store TestEventStore) Store(event Event) error {
 	}
 
 	EventStored = true
-	LastEvent = event
+	LastEvent = &event
 	return nil
 }
 
@@ -103,13 +102,30 @@ var _ = Describe("Server", func() {
 		})
 
 		It("creates an event with a UUID", func() {
-			EventStored = false
+			LastEvent = nil
 
 			response = post(&server, "/event", eventJson)
 
-			Eventually(func() uuid.UUID {
+			Eventually(func() interface{} {
+				if LastEvent == nil {
+					return nil
+				}
 				return LastEvent.Id
 			}).ShouldNot(BeNil())
+		})
+
+		It("ignores any given UUID", func() {
+			LastEvent = nil
+
+			response = post(&server, "/event", eventJson)
+
+			Eventually(func() bool {
+				if LastEvent == nil {
+					return false
+				}
+
+				return LastEvent.Id != event.Id
+			}).Should(BeTrue())
 		})
 
 		It("return HTTP 200 when the event does not have metadata", func() {
