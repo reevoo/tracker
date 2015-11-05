@@ -3,7 +3,6 @@ package main
 import (
 	. "github.com/reevoo/tracker"
 	"os"
-	"os/signal"
 	"syscall"
 )
 
@@ -14,8 +13,6 @@ var (
 )
 
 func main() {
-	go exitOnInterrupt()
-
 	// Release mode reduces the amount of logging.
 	if env == "production" {
 		SetServerMode("release")
@@ -27,11 +24,4 @@ func main() {
 	})
 
 	server.Run(":3000")
-}
-
-func exitOnInterrupt() {
-	sigchan := make(chan os.Signal, 10)
-	signal.Notify(sigchan, os.Interrupt, os.Kill, Term)
-	<-sigchan
-	os.Exit(0)
 }

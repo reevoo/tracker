@@ -56,5 +56,6 @@ type ConsoleLogger struct{}
 
 // Logs an error to the console.
 func (ConsoleLogger) LogError(err TrackerError) {
-	fmt.Printf("[ERROR] %s", err.Error())
+	fmt.Fprintln(os.Stderr, fmt.Sprintf("[ERROR] %s", err.Error()))
+
 }
