@@ -19,12 +19,6 @@ func (event Event) ToJson() string {
 	return string(jsonBytes[:])
 }
 
-// func postEventToDynamoDB(event Event) {
-// 	TrackError(nil, "PostFailed", map[string]string{
-// 		"event": event.ToJson(),
-// 	})
-// }
-
 // The Server is the Tracker API.
 type Server struct {
 	engine      *gin.Engine
@@ -94,8 +88,18 @@ func (server Server) postEvent(context *gin.Context) {
 	if err == nil {
 		// We return the HTTP request quickly
 		// and process the event in the background.
-		// TODO: This does nothing yet!
-		go server.eventStore.Store(event)
+		go server.storeEvent(event)
 		context.String(http.StatusOK, "")
+	}
+}
+
+func (server Server) storeEvent(event Event) {
+	err := server.eventStore.Store(event)
+
+	if err != nil {
+		server.errorLogger.LogError(TrackerError{
+			Name: "CannotStoreEvent",
+			// TODO: Get context
+		})
 	}
 }

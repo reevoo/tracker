@@ -22,7 +22,8 @@ func main() {
 	go exitOnInterrupt()
 
 	server := NewServer(ServerParams{
-		errorLogger: SentryErrorLogger{},
+		EventStore:  DynamoDBEventStore{},
+		ErrorLogger: SentryErrorLogger{},
 	})
 
 	server.Run(":3000")

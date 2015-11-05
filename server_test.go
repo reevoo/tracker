@@ -1,32 +1,40 @@
 package tracker_test
 
 import (
-	"fmt"
+	"errors"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/reevoo/tracker"
 	"net/http/httptest"
 )
 
-// Logs errors to an exposed array.
-type TestErrorLogger struct {
-	LastError TrackerError
-}
+// Testing flag to check if an error is thrown.
+var ErrorThrown = false
 
-// Logs an error to an exposed array.
+// Implementation of ErrorLogger that flips ErrorThrown.
+type TestErrorLogger struct{}
+
+// Flips ErrorThrown.
 func (errorLogger TestErrorLogger) LogError(err TrackerError) {
-	fmt.Print(err.Name)
-	errorLogger.LastError = err
+	ErrorThrown = true
 }
 
-// Stores a single event for testing.
+// Testing flag to check if an Event is stored.
+var EventStored = false
+
+// Test implementation of EventStore.
 type TestEventStore struct {
-	LastEvent Event
+	ThrowError bool
 }
 
-// Stores an event.
-func (store TestEventStore) Store(event Event) {
-	store.LastEvent = event
+// Flips EventStored.
+func (store TestEventStore) Store(event Event) error {
+	if store.ThrowError {
+		return errors.New("TestEventStoreTriggeredError")
+	}
+
+	EventStored = true
+	return nil
 }
 
 var _ = Describe("Server", func() {
@@ -40,8 +48,8 @@ var _ = Describe("Server", func() {
 
 	BeforeEach(func() {
 		server = NewServer(ServerParams{
-			ErrorLogger: errors,
-			EventStore:  store,
+			ErrorLogger: &errors,
+			EventStore:  &store,
 		})
 	})
 
@@ -63,21 +71,33 @@ var _ = Describe("Server", func() {
 	Describe("POST /event", func() {
 
 		var (
-			response         *httptest.ResponseRecorder
-			validRequestJson string
+			response  *httptest.ResponseRecorder
+			event     Event
+			eventJson string
 		)
 
 		BeforeEach(func() {
-			validRequestJson = Event{Name: "EventName", Metadata: make(map[string]interface{})}.ToJson()
+			event = Event{
+				Name:     "EventName",
+				Metadata: make(map[string]interface{}),
+			}
+
+			eventJson = event.ToJson()
 		})
 
 		It("returns HTTP 200", func() {
-			response = post(&server, "/event", validRequestJson)
+			response = post(&server, "/event", eventJson)
 			Expect(response.Code).To(Equal(200))
 		})
 
-		PIt("sends a request to DynamoDB when JSON is correct", func() {
-			response = post(&server, "/event", validRequestJson)
+		It("sends a request to DynamoDB when JSON is correct", func() {
+			EventStored = false
+
+			response = post(&server, "/event", eventJson)
+
+			Eventually(func() bool {
+				return EventStored
+			}).Should(BeTrue())
 		})
 
 		It("return HTTP 200 when the event does not have metadata", func() {
@@ -95,12 +115,16 @@ var _ = Describe("Server", func() {
 			Expect(response.Code).To(Equal(400))
 		})
 
-		PIt("tracks an error when the DynamoDB request fails", func() {
-			response = post(&server, "/event", validRequestJson)
+		It("tracks an error when the DynamoDB request fails", func() {
+			store.ThrowError = true
+			ErrorThrown = false
 
-			Eventually(func() TrackerError {
-				return errors.LastError
-			}).ShouldNot(BeNil())
+			response = post(&server, "/event", eventJson)
+
+			Eventually(func() bool {
+				return ErrorThrown
+			}).Should(BeTrue())
+			store.ThrowError = false
 		})
 	})
 

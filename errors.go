@@ -1,7 +1,6 @@
 package tracker
 
 import (
-	"errors"
 	"fmt"
 	"github.com/getsentry/raven-go"
 )
@@ -10,6 +9,11 @@ import (
 type TrackerError struct {
 	Name    string
 	Context map[string]string
+}
+
+// Returns the error description in full.
+func (err TrackerError) Error() string {
+	return err.Name
 }
 
 // Convert a Go error into a TrackerError.
@@ -27,11 +31,6 @@ func (err TrackerError) ToMap() map[string]string {
 	return all
 }
 
-// Convert a TrackerError to a Go error.
-func (err TrackerError) ToError() error {
-	return errors.New(err.Name)
-}
-
 // EventLoggers keep a log of errors.
 type ErrorLogger interface {
 	LogError(err TrackerError)
@@ -42,7 +41,7 @@ type SentryErrorLogger struct{}
 
 // Logs an error to Sentry.
 func (SentryErrorLogger) LogError(err TrackerError) {
-	packet := raven.NewPacket(err.Name, raven.NewException(err.ToError(), raven.NewStacktrace(2, 3, nil)))
+	packet := raven.NewPacket(err.Error(), raven.NewException(err, raven.NewStacktrace(2, 3, nil)))
 	raven.Capture(packet, err.ToMap())
 }
 
@@ -51,5 +50,5 @@ type ConsoleLogger struct{}
 
 // Logs an error to the console.
 func (ConsoleLogger) LogError(err TrackerError) {
-	fmt.Printf("[ERROR] %s", err.Name)
+	fmt.Printf("[ERROR] %s", err.Error())
 }
