@@ -1,23 +1,10 @@
 package tracker
 
 import (
-	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"github.com/nu7hatch/gouuid"
 	"net/http"
 )
-
-// An Event is a structure holding information
-// about something that has happened in one of our applications.
-type Event struct {
-	Name     string                 `json:"name" binding:"required"`
-	Metadata map[string]interface{} `json:"metadata"`
-}
-
-// Converts the Event to JSON format.
-func (event Event) ToJson() string {
-	jsonBytes, _ := json.Marshal(event)
-	return string(jsonBytes[:])
-}
 
 // The Server is the Tracker API.
 type Server struct {
@@ -101,6 +88,10 @@ func (server Server) postEvent(context *gin.Context) {
 	err := context.BindJSON(&event)
 
 	if err == nil {
+		// Set a new ID
+		id, _ := uuid.NewV4()
+		event.Id = *id
+
 		// We return the HTTP request quickly
 		// and process the event in the background.
 		go server.storeEvent(event)
