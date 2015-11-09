@@ -7,9 +7,9 @@ type EventStore interface {
 	Store(event Event) error
 }
 
-// TODO: Write real client!
-type DynamoDBEventStore struct{}
+// An EventLog outputs events as JSON to STDOUT.
+type EventLog struct{}
 
-func (store DynamoDBEventStore) Store(event Event) error {
+func (store EventLog) Store(event Event) error {
 	return nil
 }
