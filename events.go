@@ -3,7 +3,7 @@ package tracker
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/nu7hatch/gouuid"
+	"github.com/reevoo/tracker/Godeps/_workspace/src/github.com/nu7hatch/gouuid"
 	"net/url"
 )
 

@@ -2,9 +2,9 @@ package tracker_test
 
 import (
 	"errors"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	. "github.com/reevoo/tracker"
+	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/ginkgo"
+	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/gomega"
 	"net/http/httptest"
 )
 
