@@ -81,7 +81,7 @@ var _ = Describe("Server", func() {
 		)
 
 		BeforeEach(func() {
-			event = NewEvent("EventName", nil)
+			event = NewEvent("EventName", ExampleMetadata)
 
 			eventJson = event.ToJson()
 		})
@@ -128,8 +128,15 @@ var _ = Describe("Server", func() {
 			}).Should(BeTrue())
 		})
 
-		It("return HTTP 200 when the event does not have metadata", func() {
+		It("returns HTTP 200 when the event does not have metadata", func() {
 			response = post(&server, "/event", NewEvent("EventName", nil).ToJson())
+			Expect(response.Code).To(Equal(200))
+		})
+
+		It("returns HTTP 200 when the event has metadata", func() {
+			event := NewEvent("EventName", ExampleMetadata)
+
+			response = post(&server, "/event", event.ToJson())
 			Expect(response.Code).To(Equal(200))
 		})
 

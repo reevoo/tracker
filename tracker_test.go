@@ -11,6 +11,18 @@ import (
 	"testing"
 )
 
+var ExampleMetadata = Metadata{
+	"meta_str":   "Hello, World!",
+	"meta_int":   123,
+	"meta_float": 1.23,
+	"meta_bool":  true,
+	"meta_nil":   nil,
+	"meta_map": Metadata{
+		"really_meta_str": "Goodbye, cruel world!",
+	},
+	"meta_list": []interface{}{"one", 2, 3.14, true, nil, Metadata{}},
+}
+
 func init() {
 	// Disable verbose logging on Test.
 	fmt.Print("NOTE: Verbose logging is disabled on test.\nTo change this, go to `tracker_test.go`.\n\n")
