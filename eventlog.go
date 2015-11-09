@@ -1,7 +1,6 @@
 package tracker
 
 import (
-	"fmt"
 	"io"
 	"os"
 )
@@ -13,18 +12,20 @@ type EventStore interface {
 
 // An EventLog outputs events as JSON to STDOUT.
 type EventLog struct {
-	writer io.Writer
+	Writer io.Writer
 }
 
-func NewEventLog(writer io.Writer) {
+func NewEventLog(writer io.Writer) EventLog {
 	if writer == nil {
 		writer = os.Stdout
 	}
+
+	return EventLog{Writer: writer}
 }
 
 // Store an event
 func (store EventLog) Store(event Event) error {
-	fmt.Println(event.ToJson())
+	_, error := store.Writer.Write([]byte(event.ToJson()))
 
-	return nil
+	return error
 }
