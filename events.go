@@ -1,36 +1,54 @@
 package tracker
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/nu7hatch/gouuid"
+	"net/url"
 )
-
-// Metadata is used to collect any event-specific context.
-type Metadata map[string]interface{}
 
 // An Event is a structure holding information
 // about something that has happened in one of our applications.
-type Event struct {
-	Id       uuid.UUID
-	Name     string   `json:"name" binding:"required"`
-	Metadata Metadata `json:"metadata"`
-}
+type Event map[string][]string
 
 // Create a new Event.
-func NewEvent(name string, metadata Metadata) Event {
+func NewEvent(params map[string][]string) Event {
 	id, _ := uuid.NewV4()
+	params["id"] = []string{id.String()}
 
-	event := Event{
-		Id:       *id,
-		Name:     name,
-		Metadata: metadata,
-	}
+	return params
+}
 
-	return event
+// Returns the ID of an event.
+func (event Event) Id() string {
+	return event["id"][0]
+}
+
+// Returns true if no items are in the Event.
+func (event Event) Empty() bool {
+	// An Event has an ID by default,
+	// so an empty event has 1 entry.
+	return len(event) == 1
 }
 
 // Converts the Event to JSON format.
 func (event Event) ToJson() string {
 	jsonBytes, _ := json.Marshal(event)
 	return string(jsonBytes[:])
+}
+
+// Converts the Event to query parameters.
+// Only used for testing; hence why we ignore errors...
+func (event Event) ToParams() string {
+	var buf bytes.Buffer
+	for key, values := range event {
+		for _, value := range values {
+			buf.WriteString(url.QueryEscape(key))
+			buf.WriteByte('=')
+			buf.WriteString(url.QueryEscape(value))
+			buf.WriteByte('&')
+		}
+	}
+	s := buf.String()
+	return s[0 : len(s)-1]
 }

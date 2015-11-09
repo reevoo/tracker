@@ -2,7 +2,6 @@ package tracker
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/nu7hatch/gouuid"
 	"net/http"
 )
 
@@ -45,7 +44,7 @@ func initServer(engine *gin.Engine, params ServerParams) Server {
 	// Build the engine
 	server.engine.Use(server.handleRecovery)
 	server.engine.GET("/status", server.getStatus)
-	server.engine.POST("/event", server.postEvent)
+	server.engine.GET("/event", server.trackEvent)
 
 	return server
 }
@@ -80,18 +79,17 @@ func (server Server) getStatus(context *gin.Context) {
 	context.String(http.StatusOK, "I AM ALIVE")
 }
 
-// Store an event.
-func (server Server) postEvent(context *gin.Context) {
+// Track an event.
+func (server Server) trackEvent(context *gin.Context) {
 	// Ensure the JSON is valid before returning
 	// context.BindJSON() sets an error status to the context on failure.
-	var event Event
-	err := context.BindJSON(&event)
+	var event = NewEvent(
+		context.Request.URL.Query(),
+	)
 
-	if err == nil {
-		// Set a new ID
-		id, _ := uuid.NewV4()
-		event.Id = *id
-
+	if event.Empty() {
+		context.String(http.StatusBadRequest, "No event params given.")
+	} else {
 		// We return the HTTP request quickly
 		// and process the event in the background.
 		go server.storeEvent(event)

@@ -9,8 +9,8 @@ import (
 var _ = Describe("NewEvent", func() {
 
 	It("Generates an ID", func() {
-		event := NewEvent("EventName", nil)
-		Expect(event.Id).NotTo(BeNil())
+		event := NewEvent(map[string][]string{})
+		Expect(event["id"]).NotTo(BeNil())
 	})
 
 })
