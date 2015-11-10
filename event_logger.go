@@ -10,21 +10,21 @@ type EventStore interface {
 	Store(event Event) error
 }
 
-// An EventLog outputs events as JSON to STDOUT.
-type EventLog struct {
+// An EventLogger outputs events as JSON to STDOUT.
+type EventLogger struct {
 	Writer io.Writer
 }
 
-func NewEventLog(writer io.Writer) EventLog {
+func NewEventLogger(writer io.Writer) EventLogger {
 	if writer == nil {
 		writer = os.Stdout
 	}
 
-	return EventLog{Writer: writer}
+	return EventLogger{Writer: writer}
 }
 
 // Store an event
-func (store EventLog) Store(event Event) error {
+func (store EventLogger) Store(event Event) error {
 	_, error := io.WriteString(store.Writer, event.ToJson() + "\n")
 	return error
 }

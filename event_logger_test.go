@@ -16,31 +16,31 @@ func (store TestStore) Write(p []byte) (n int, err error) {
 	return len(LastWrite), nil
 }
 
-var _ = Describe("NewEventLog", func() {
+var _ = Describe("NewEventLogger", func() {
 
 	It("Writes to STDOUT by default", func() {
-		eventLog := NewEventLog(nil)
-		Expect(eventLog.Writer).To(Equal(os.Stdout))
+		eventLogger := NewEventLogger(nil)
+		Expect(eventLogger.Writer).To(Equal(os.Stdout))
 	})
 
 	Describe("Store()", func() {
 		var (
-			eventLog EventLog
+			eventLogger EventLogger
 			event Event
 		)
 
 		BeforeEach(func () {
-			eventLog = NewEventLog(TestStore{})
+			eventLogger = NewEventLogger(TestStore{})
 			event = NewEvent(map[string][]string{"param1": []string{"val1"}})
 		})
 
 		It("Writes JSON to writer", func() {
-			eventLog.Store(event)
+			eventLogger.Store(event)
 			Expect(LastWrite).To(ContainSubstring(event.ToJson()))
 		})
 
 		It("Writes a new line", func() {
-			eventLog.Store(event)
+			eventLogger.Store(event)
 			Expect(LastWrite).To(HaveSuffix("\n"))
 		})
 
