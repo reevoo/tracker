@@ -19,7 +19,7 @@ func main() {
 	}
 
 	server := NewServer(ServerParams{
-		EventStore:  NewEventLog(nil),
+		EventStore:  NewEventLogger(nil),
 		ErrorLogger: SentryErrorLogger{},
 	})
 
