@@ -24,14 +24,24 @@ var _ = Describe("NewEventLog", func() {
 	})
 
 	Describe("Store()", func() {
+		var (
+			eventLog EventLog
+			event Event
+		)
+
+		BeforeEach(func () {
+			eventLog = NewEventLog(TestStore{})
+			event = NewEvent(map[string][]string{"param1": []string{"val1"}})
+		})
 
 		It("Writes JSON to writer", func() {
-			testStore := TestStore{}
-			event := NewEvent(map[string][]string{})
-			eventLog := NewEventLog(testStore)
-
 			eventLog.Store(event)
-			Expect(LastWrite).To(Equal(event.ToJson()))
+			Expect(LastWrite).To(ContainSubstring(event.ToJson()))
+		})
+
+		It("Writes a new line", func() {
+			eventLog.Store(event)
+			Expect(LastWrite).To(HaveSuffix("\n"))
 		})
 
 	})

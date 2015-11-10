@@ -25,7 +25,6 @@ func NewEventLog(writer io.Writer) EventLog {
 
 // Store an event
 func (store EventLog) Store(event Event) error {
-	_, error := store.Writer.Write([]byte(event.ToJson()))
-
+	_, error := io.WriteString(store.Writer, event.ToJson() + "\n")
 	return error
 }

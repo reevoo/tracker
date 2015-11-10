@@ -51,7 +51,7 @@ var _ = Describe("Server", func() {
 	)
 
 	BeforeEach(func() {
-		server = NewSilentServer(ServerParams{
+		server = NewServer(ServerParams{
 			ErrorLogger: &errors,
 			EventStore:  &store,
 		})
