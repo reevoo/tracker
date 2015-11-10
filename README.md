@@ -26,9 +26,35 @@ Get the code:
 go get github.com/reevoo/tracker
 ```
 
-to check everything is working properly run `go test` to run the unit tests.
+Dependencies
+---
+Dependencies are managed by [godep](https://github.com/tools/godep).
+
+Install godep:
+```bash
+go get github.com/tools/godep
+```
+
+To save currently-used dependencies to file Godeps:
+```bash
+godep save
+```
+
+Tests
+---
+To check everything is working properly run `go test` to run the unit tests.
 
 To start the server, run `go run tracker/server.go`
+
+
+Install & Run
+---
+```bash
+ godep save
+ godep go install
+ $GOPATH/bin/tracker
+```
+
 
 <!---
 
