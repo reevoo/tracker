@@ -1,11 +1,10 @@
 package tracker_test
 
 import (
-	"bytes"
 	"fmt"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	. "github.com/reevoo/tracker"
+	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/ginkgo"
+	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/gomega"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -20,16 +19,6 @@ func init() {
 // Performs a GET request.
 func get(server *Server, url string) *httptest.ResponseRecorder {
 	req, _ := http.NewRequest("GET", url, nil)
-	resp := httptest.NewRecorder()
-	server.ServeHTTP(resp, req)
-
-	return resp
-}
-
-// Performs a POST request.
-func post(server *Server, url string, body string) *httptest.ResponseRecorder {
-	bodyReader := bytes.NewBufferString(body)
-	req, _ := http.NewRequest("POST", url, bodyReader)
 	resp := httptest.NewRecorder()
 	server.ServeHTTP(resp, req)
 

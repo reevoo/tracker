@@ -19,7 +19,7 @@ func main() {
 	}
 
 	server := NewServer(ServerParams{
-		EventStore:  DynamoDBEventStore{},
+		EventStore:  NewEventLogger(nil),
 		ErrorLogger: SentryErrorLogger{},
 	})
 

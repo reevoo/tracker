@@ -1,23 +1,9 @@
 package tracker
 
 import (
-	"encoding/json"
-	"github.com/gin-gonic/gin"
+	"github.com/reevoo/tracker/Godeps/_workspace/src/github.com/gin-gonic/gin"
 	"net/http"
 )
-
-// An Event is a structure holding information
-// about something that has happened in one of our applications.
-type Event struct {
-	Name     string                 `json:"name" binding:"required"`
-	Metadata map[string]interface{} `json:"metadata"`
-}
-
-// Converts the Event to JSON format.
-func (event Event) ToJson() string {
-	jsonBytes, _ := json.Marshal(event)
-	return string(jsonBytes[:])
-}
 
 // The Server is the Tracker API.
 type Server struct {
@@ -36,14 +22,8 @@ func SetServerMode(mode string) {
 	gin.SetMode(mode)
 }
 
-// Create a new Server.
-func NewServer(params ServerParams) Server {
-	return initServer(gin.Default(), params)
-}
-
 // Creates a new Server that does no logging.
-// Handy in testing.
-func NewSilentServer(params ServerParams) Server {
+func NewServer(params ServerParams) Server {
 	engine := gin.New()
 	return initServer(engine, params)
 }
@@ -58,7 +38,7 @@ func initServer(engine *gin.Engine, params ServerParams) Server {
 	// Build the engine
 	server.engine.Use(server.handleRecovery)
 	server.engine.GET("/status", server.getStatus)
-	server.engine.POST("/event", server.postEvent)
+	server.engine.GET("/event", server.trackEvent)
 
 	return server
 }
@@ -93,14 +73,17 @@ func (server Server) getStatus(context *gin.Context) {
 	context.String(http.StatusOK, "I AM ALIVE")
 }
 
-// Store an event.
-func (server Server) postEvent(context *gin.Context) {
+// Track an event.
+func (server Server) trackEvent(context *gin.Context) {
 	// Ensure the JSON is valid before returning
 	// context.BindJSON() sets an error status to the context on failure.
-	var event Event
-	err := context.BindJSON(&event)
+	var event = NewEvent(
+		context.Request.URL.Query(),
+	)
 
-	if err == nil {
+	if event.Empty() {
+		context.String(http.StatusBadRequest, "No event params given.")
+	} else {
 		// We return the HTTP request quickly
 		// and process the event in the background.
 		go server.storeEvent(event)

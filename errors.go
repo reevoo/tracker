@@ -2,7 +2,7 @@ package tracker
 
 import (
 	"fmt"
-	"github.com/getsentry/raven-go"
+	"github.com/reevoo/tracker/Godeps/_workspace/src/github.com/getsentry/raven-go"
 	"os"
 )
 

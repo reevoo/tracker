@@ -2,9 +2,9 @@ package tracker_test
 
 import (
 	"errors"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	. "github.com/reevoo/tracker"
+	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/ginkgo"
+	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/gomega"
 	"net/http/httptest"
 )
 
@@ -20,7 +20,10 @@ func (errorLogger TestErrorLogger) LogError(err TrackerError) {
 }
 
 // Testing flag to check if an Event is stored.
-var EventStored = false
+var (
+	EventStored = false
+	LastEvent   Event
+)
 
 // Test implementation of EventStore.
 type TestEventStore struct {
@@ -34,6 +37,7 @@ func (store TestEventStore) Store(event Event) error {
 	}
 
 	EventStored = true
+	LastEvent = event
 	return nil
 }
 
@@ -47,7 +51,7 @@ var _ = Describe("Server", func() {
 	)
 
 	BeforeEach(func() {
-		server = NewSilentServer(ServerParams{
+		server = NewServer(ServerParams{
 			ErrorLogger: &errors,
 			EventStore:  &store,
 		})
@@ -68,58 +72,76 @@ var _ = Describe("Server", func() {
 
 	})
 
-	Describe("POST /event", func() {
+	Describe("GET /event", func() {
 
 		var (
-			response  *httptest.ResponseRecorder
-			event     Event
-			eventJson string
+			response *httptest.ResponseRecorder
+			event    Event
+			url      string
 		)
 
 		BeforeEach(func() {
-			event = Event{
-				Name:     "EventName",
-				Metadata: make(map[string]interface{}),
+			event = map[string][]string{
+				"name": []string{"EventName"},
 			}
 
-			eventJson = event.ToJson()
+			url = "/event?" + event.ToParams()
 		})
 
 		It("returns HTTP 200", func() {
-			response = post(&server, "/event", eventJson)
+			response = get(&server, url)
 			Expect(response.Code).To(Equal(200))
 		})
 
-		It("sends a request to DynamoDB when JSON is correct", func() {
+		It("sends a request to the Event Store when JSON is correct", func() {
 			EventStored = false
 
-			response = post(&server, "/event", eventJson)
+			response = get(&server, url)
 
 			Eventually(func() bool {
 				return EventStored
 			}).Should(BeTrue())
 		})
 
-		It("return HTTP 200 when the event does not have metadata", func() {
-			response = post(&server, "/event", Event{Name: "EventName", Metadata: nil}.ToJson())
-			Expect(response.Code).To(Equal(200))
+		It("creates an event with a UUID", func() {
+			LastEvent = nil
+
+			response = get(&server, url)
+
+			Eventually(func() interface{} {
+				if LastEvent == nil {
+					return nil
+				}
+				return LastEvent.Id()
+			}).ShouldNot(BeNil())
 		})
 
-		It("returns HTTP 400 when the event is not JSON", func() {
-			response = post(&server, "/event", "Definitely Not JSON!")
+		It("ignores any given UUID", func() {
+			LastEvent = nil
+
+			url = url + "&id=ID"
+
+			response = get(&server, url)
+
+			Eventually(func() bool {
+				if LastEvent == nil {
+					return false
+				}
+
+				return LastEvent.Id() != "ID"
+			}).Should(BeTrue())
+		})
+
+		It("returns HTTP 400 when no params are given", func() {
+			response = get(&server, "/event")
 			Expect(response.Code).To(Equal(400))
 		})
 
-		It("returns HTTP 400 when the event does not have a name", func() {
-			response = post(&server, "/event", Event{Name: "", Metadata: make(map[string]interface{})}.ToJson())
-			Expect(response.Code).To(Equal(400))
-		})
-
-		It("tracks an error when the DynamoDB request fails", func() {
+		It("tracks an error when the Event Store request fails", func() {
 			store.ThrowError = true
 			ErrorThrown = false
 
-			response = post(&server, "/event", eventJson)
+			response = get(&server, url)
 
 			Eventually(func() bool {
 				return ErrorThrown
