@@ -3,6 +3,10 @@
 	"GoVersion": "go1.5.1",
 	"Deps": [
 		{
+			"ImportPath": "github.com/dustin/go-broadcast",
+			"Rev": "3bdf6d4a7164a50bc19d5f230e2981d87d2584f1"
+		},
+		{
 			"ImportPath": "github.com/getsentry/raven-go",
 			"Rev": "d25a363f644decca10856d923980d10555f473e9"
 		},
@@ -14,6 +18,15 @@
 		{
 			"ImportPath": "github.com/manucorporat/sse",
 			"Rev": "fe6ea2c8e398672518ef204bf0fbd9af858d0e15"
+		},
+		{
+			"ImportPath": "github.com/manucorporat/stats",
+			"Rev": "8f2d6ace262eba462e9beb552382c98be51d807b"
+		},
+		{
+			"ImportPath": "github.com/masahide/fluent-logger-golang/fluent",
+			"Comment": "v1.0.0-8-gc1a5c30",
+			"Rev": "c1a5c3071363fecd38c1582d94b46f5ea1725a82"
 		},
 		{
 			"ImportPath": "github.com/mattn/go-colorable",
@@ -32,6 +45,20 @@
 			"ImportPath": "github.com/onsi/gomega",
 			"Comment": "v1.0-71-g2152b45",
 			"Rev": "2152b45fa28a361beba9aab0885972323a444e28"
+		},
+		{
+			"ImportPath": "github.com/philhofer/fwd",
+			"Rev": "8fd9a4b75098b2125fe442e48a3ffbf738254e13"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/assert",
+			"Comment": "v1.0-12-g7e4a149",
+			"Rev": "7e4a149930b09fe4c2b134c50ce637457ba6e966"
+		},
+		{
+			"ImportPath": "github.com/tinylib/msgp/msgp",
+			"Comment": "v1.0-beta",
+			"Rev": "0cea1fa86e8403be1284013014f87ab942056de8"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
