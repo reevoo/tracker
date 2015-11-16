@@ -1,16 +1,21 @@
 package event_test
 
 import (
-	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/ginkgo"
-	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/gomega"
+  "testing"
+	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	. "github.com/reevoo/tracker/event"
 )
 
-var _ = Describe("NewEvent", func() {
+func TestEvents(t *testing.T) {
 
-	It("Generates an ID", func() {
+      Convey("Generating an ID", t, func() {
 		event := New(map[string][]string{})
-		Expect(event["id"]).NotTo(BeNil())
+		So(event["id"], ShouldNotBeNil)
 	})
 
-})
+        Convey("An Empty Event", t, func() {
+          event := New(map[string][]string{})
+          So(event.Empty(), ShouldBeTrue)
+        })
+
+}

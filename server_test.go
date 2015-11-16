@@ -1,6 +1,8 @@
 package tracker_test
 
 import (
+	"bytes"
+        "net/url"
 	"errors"
 	. "github.com/reevoo/tracker"
 	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/ginkgo"
@@ -40,6 +42,20 @@ func (store TestEventLogger) Log(e interface{}) error {
 	EventStored = true
         LastEvent = e.(event.Event)
 	return nil
+}
+
+func EventToParams(event event.Event) string {
+	var buf bytes.Buffer
+	for key, values := range event {
+		for _, value := range values {
+			buf.WriteString(url.QueryEscape(key))
+			buf.WriteByte('=')
+			buf.WriteString(url.QueryEscape(value))
+			buf.WriteByte('&')
+		}
+	}
+	s := buf.String()
+	return s[0 : len(s)-1]
 }
 
 var _ = Describe("Server", func() {
@@ -86,7 +102,7 @@ var _ = Describe("Server", func() {
 				"name": []string{"EventName"},
 			}
 
-			url = "/event?" + event.ToParams()
+			url = "/event?" + EventToParams(event)
 		})
 
 		It("returns HTTP 200", func() {
@@ -113,7 +129,7 @@ var _ = Describe("Server", func() {
 				if LastEvent == nil {
 					return nil
 				}
-				return LastEvent.Id()
+				return LastEvent["id"]
 			}).ShouldNot(BeNil())
 		})
 
@@ -129,7 +145,7 @@ var _ = Describe("Server", func() {
 					return false
 				}
 
-				return LastEvent.Id() != "ID"
+				return LastEvent["id"][0] != "ID"
 			}).Should(BeTrue())
 		})
 
