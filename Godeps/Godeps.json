@@ -1,6 +1,9 @@
 {
 	"ImportPath": "github.com/reevoo/tracker",
 	"GoVersion": "go1.5.1",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/dustin/go-broadcast",
@@ -14,6 +17,10 @@
 			"ImportPath": "github.com/gin-gonic/gin",
 			"Comment": "v1.0rc1-148-g52fcc5d",
 			"Rev": "52fcc5dbf6e94df33ad313858fb94b713e9d1b4a"
+		},
+		{
+			"ImportPath": "github.com/jtolds/gls",
+			"Rev": "9a4a02dbe491bef4bab3c24fd9f3087d6c4c6690"
 		},
 		{
 			"ImportPath": "github.com/manucorporat/sse",
@@ -49,6 +56,16 @@
 		{
 			"ImportPath": "github.com/philhofer/fwd",
 			"Rev": "8fd9a4b75098b2125fe442e48a3ffbf738254e13"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/assertions",
+			"Comment": "1.5.0-403-g52d9726",
+			"Rev": "52d9726e53763b138bfe32bfa7d732bb2ad3f03e"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/goconvey/convey",
+			"Comment": "1.5.0-437-ga29728e",
+			"Rev": "a29728e4d70bb23e436d03bee49b1793e70a9352"
 		},
 		{
 			"ImportPath": "github.com/stretchr/testify/assert",

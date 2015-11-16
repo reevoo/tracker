@@ -3,9 +3,9 @@ package tracker_test
 import (
 	"errors"
 	. "github.com/reevoo/tracker"
-	"github.com/reevoo/tracker/event"
 	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/ginkgo"
 	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/gomega"
+	"github.com/reevoo/tracker/event"
 	"net/http/httptest"
 )
 
@@ -32,13 +32,13 @@ type TestEventLogger struct {
 }
 
 // Flips EventStored.
-func (store TestEventLogger) Log(e event.Event) error {
+func (store TestEventLogger) Log(e interface{}) error {
 	if store.ThrowError {
 		return errors.New("TestEventStoreTriggeredError")
 	}
 
 	EventStored = true
-	LastEvent = e
+        LastEvent = e.(event.Event)
 	return nil
 }
 
@@ -54,7 +54,7 @@ var _ = Describe("Server", func() {
 	BeforeEach(func() {
 		server = NewServer(ServerParams{
 			ErrorLogger: &errors,
-			EventLogger:  &logger,
+			EventLogger: &logger,
 		})
 	})
 

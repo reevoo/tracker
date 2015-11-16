@@ -2,6 +2,7 @@ package main
 
 import (
 	. "github.com/reevoo/tracker"
+	"github.com/reevoo/tracker/logger"
 	"os"
 	"syscall"
 )
@@ -18,13 +19,13 @@ func main() {
 		SetServerMode("release")
 	}
 
-	logger, err := NewEventLogger(nil)
+	logger, err := logger.New()
 	if err != nil {
 		panic(err)
 	}
 
 	server := NewServer(ServerParams{
-		EventLogger:  logger,
+		EventLogger: logger,
 		ErrorLogger: SentryErrorLogger{},
 	})
 

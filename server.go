@@ -1,8 +1,9 @@
 package tracker
 
 import (
-  "github.com/reevoo/tracker/event"
 	"github.com/reevoo/tracker/Godeps/_workspace/src/github.com/gin-gonic/gin"
+	"github.com/reevoo/tracker/event"
+	"github.com/reevoo/tracker/logger"
 	"net/http"
 )
 
@@ -10,13 +11,13 @@ import (
 type Server struct {
 	engine      *gin.Engine
 	errorLogger ErrorLogger
-	eventLogger  EventLogger
+	eventLogger logger.Logger
 }
 
 // Parameters passed to NewServer().
 type ServerParams struct {
 	ErrorLogger ErrorLogger
-	EventLogger  EventLogger
+	EventLogger logger.Logger
 }
 
 func SetServerMode(mode string) {
@@ -33,7 +34,7 @@ func initServer(engine *gin.Engine, params ServerParams) Server {
 	server := Server{
 		engine:      engine,
 		errorLogger: params.ErrorLogger,
-		eventLogger:  params.EventLogger,
+		eventLogger: params.EventLogger,
 	}
 
 	// Build the engine
