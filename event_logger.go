@@ -1,6 +1,7 @@
 package tracker
 
 import (
+  "github.com/reevoo/tracker/event"
 	"github.com/reevoo/tracker/Godeps/_workspace/src/github.com/masahide/fluent-logger-golang/fluent"
 	"io"
 	"os"
@@ -8,7 +9,7 @@ import (
 
 // An EventStore is used to permanently store events
 type EventLogger interface {
-	Log(event Event) error
+	Log(event event.Event) error
 }
 
 
@@ -26,8 +27,8 @@ type IoEventLogger struct {
 	Writer io.Writer
 }
 
-func (l *IoEventLogger) Log(event Event) error {
-	_, error := io.WriteString(l.Writer, event.ToJson()+"\n")
+func (l *IoEventLogger) Log(e event.Event) error {
+	_, error := io.WriteString(l.Writer, e.ToJson()+"\n")
 	return error
 }
 
@@ -55,7 +56,7 @@ func newFluentEventLogger(socketPath string) (*FluentEventLogger, error) {
 	return &FluentEventLogger{logger: logger}, err
 }
 
-func (l *FluentEventLogger) Log(event Event) error {
-	error := l.logger.Post("tracker.event", event)
+func (l *FluentEventLogger) Log(e event.Event) error {
+	error := l.logger.Post("tracker.event", e)
 	return error
 }

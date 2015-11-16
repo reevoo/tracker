@@ -3,6 +3,7 @@ package tracker_test
 import (
 	"errors"
 	. "github.com/reevoo/tracker"
+	"github.com/reevoo/tracker/event"
 	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/ginkgo"
 	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/gomega"
 	"net/http/httptest"
@@ -22,7 +23,7 @@ func (errorLogger TestErrorLogger) LogError(err TrackerError) {
 // Testing flag to check if an Event is stored.
 var (
 	EventStored = false
-	LastEvent   Event
+	LastEvent   event.Event
 )
 
 // Test implementation of EventStore.
@@ -31,13 +32,13 @@ type TestEventLogger struct {
 }
 
 // Flips EventStored.
-func (store TestEventLogger) Log(event Event) error {
+func (store TestEventLogger) Log(e event.Event) error {
 	if store.ThrowError {
 		return errors.New("TestEventStoreTriggeredError")
 	}
 
 	EventStored = true
-	LastEvent = event
+	LastEvent = e
 	return nil
 }
 
@@ -76,7 +77,7 @@ var _ = Describe("Server", func() {
 
 		var (
 			response *httptest.ResponseRecorder
-			event    Event
+			event    event.Event
 			url      string
 		)
 

@@ -1,6 +1,7 @@
 package tracker
 
 import (
+  "github.com/reevoo/tracker/event"
 	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/ginkgo"
 	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/gomega"
 	"net"
@@ -19,11 +20,11 @@ func (writer TestWriter) Write(p []byte) (n int, err error) {
 var _ = Describe("NewEventLogger", func() {
 	var (
 		eventLogger EventLogger
-		event       Event
+		e       event.Event
 	)
 
 	BeforeEach(func() {
-		event = NewEvent(map[string][]string{"param1": []string{"val1"}})
+		e = event.New(map[string][]string{"param1": []string{"val1"}})
 	})
 
 	Describe("IoEventLogger", func() {
@@ -34,12 +35,12 @@ var _ = Describe("NewEventLogger", func() {
 		Describe("Store()", func() {
 
 			It("Writes JSON to writer", func() {
-				eventLogger.Log(event)
-				Expect(LastWrite).To(ContainSubstring(event.ToJson()))
+				eventLogger.Log(e)
+				Expect(LastWrite).To(ContainSubstring(e.ToJson()))
 			})
 
 			It("Writes a new line", func() {
-				eventLogger.Log(event)
+				eventLogger.Log(e)
 				Expect(LastWrite).To(HaveSuffix("\n"))
 			})
 

@@ -1,4 +1,4 @@
-package tracker
+package event
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 type Event map[string][]string
 
 // Create a new Event.
-func NewEvent(params map[string][]string) Event {
+func New(params map[string][]string) Event {
 	id, _ := uuid.NewV4()
 	params["id"] = []string{id.String()}
 

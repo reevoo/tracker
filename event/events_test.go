@@ -1,7 +1,7 @@
-package tracker_test
+package event_test
 
 import (
-	. "github.com/reevoo/tracker"
+	. "github.com/reevoo/tracker/event"
 	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/ginkgo"
 	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/gomega"
 )
@@ -9,7 +9,7 @@ import (
 var _ = Describe("NewEvent", func() {
 
 	It("Generates an ID", func() {
-		event := NewEvent(map[string][]string{})
+		event := New(map[string][]string{})
 		Expect(event["id"]).NotTo(BeNil())
 	})
 
