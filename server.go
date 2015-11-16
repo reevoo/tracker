@@ -9,13 +9,13 @@ import (
 type Server struct {
 	engine      *gin.Engine
 	errorLogger ErrorLogger
-	eventStore  EventStore
+	eventLogger  EventLogger
 }
 
 // Parameters passed to NewServer().
 type ServerParams struct {
 	ErrorLogger ErrorLogger
-	EventStore  EventStore
+	EventLogger  EventLogger
 }
 
 func SetServerMode(mode string) {
@@ -32,7 +32,7 @@ func initServer(engine *gin.Engine, params ServerParams) Server {
 	server := Server{
 		engine:      engine,
 		errorLogger: params.ErrorLogger,
-		eventStore:  params.EventStore,
+		eventLogger:  params.EventLogger,
 	}
 
 	// Build the engine
@@ -92,7 +92,7 @@ func (server Server) trackEvent(context *gin.Context) {
 }
 
 func (server Server) storeEvent(event Event) {
-	err := server.eventStore.Store(event)
+	err := server.eventLogger.Log(event)
 
 	if err != nil {
 		server.errorLogger.LogError(TrackerError{

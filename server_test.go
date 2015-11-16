@@ -26,12 +26,12 @@ var (
 )
 
 // Test implementation of EventStore.
-type TestEventStore struct {
+type TestEventLogger struct {
 	ThrowError bool
 }
 
 // Flips EventStored.
-func (store TestEventStore) Store(event Event) error {
+func (store TestEventLogger) Log(event Event) error {
 	if store.ThrowError {
 		return errors.New("TestEventStoreTriggeredError")
 	}
@@ -47,13 +47,13 @@ var _ = Describe("Server", func() {
 		server   Server
 		response *httptest.ResponseRecorder
 		errors   = TestErrorLogger{}
-		store    = TestEventStore{}
+		logger   = TestEventLogger{}
 	)
 
 	BeforeEach(func() {
 		server = NewServer(ServerParams{
 			ErrorLogger: &errors,
-			EventStore:  &store,
+			EventLogger:  &logger,
 		})
 	})
 
@@ -138,7 +138,7 @@ var _ = Describe("Server", func() {
 		})
 
 		It("tracks an error when the Event Store request fails", func() {
-			store.ThrowError = true
+			logger.ThrowError = true
 			ErrorThrown = false
 
 			response = get(&server, url)
@@ -146,7 +146,7 @@ var _ = Describe("Server", func() {
 			Eventually(func() bool {
 				return ErrorThrown
 			}).Should(BeTrue())
-			store.ThrowError = false
+			logger.ThrowError = false
 		})
 	})
 

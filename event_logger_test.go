@@ -1,48 +1,78 @@
-package tracker_test
+package tracker
 
 import (
-	. "github.com/reevoo/tracker"
 	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/ginkgo"
 	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/gomega"
+	"net"
 	"os"
 )
 
 var LastWrite string
 
-type TestStore struct{}
+type TestWriter struct{}
 
-func (store TestStore) Write(p []byte) (n int, err error) {
+func (writer TestWriter) Write(p []byte) (n int, err error) {
 	LastWrite = string(p[:])
 	return len(LastWrite), nil
 }
 
 var _ = Describe("NewEventLogger", func() {
+	var (
+		eventLogger EventLogger
+		event       Event
+	)
 
-	It("Writes to STDOUT by default", func() {
-		eventLogger := NewEventLogger(nil)
-		Expect(eventLogger.Writer).To(Equal(os.Stdout))
+	BeforeEach(func() {
+		event = NewEvent(map[string][]string{"param1": []string{"val1"}})
 	})
 
-	Describe("Store()", func() {
-		var (
-			eventLogger EventLogger
-			event Event
-		)
-
-		BeforeEach(func () {
-			eventLogger = NewEventLogger(TestStore{})
-			event = NewEvent(map[string][]string{"param1": []string{"val1"}})
+	Describe("IoEventLogger", func() {
+		BeforeEach(func() {
+			eventLogger, _ = NewEventLogger(TestWriter{})
 		})
 
-		It("Writes JSON to writer", func() {
-			eventLogger.Store(event)
-			Expect(LastWrite).To(ContainSubstring(event.ToJson()))
+		Describe("Store()", func() {
+
+			It("Writes JSON to writer", func() {
+				eventLogger.Log(event)
+				Expect(LastWrite).To(ContainSubstring(event.ToJson()))
+			})
+
+			It("Writes a new line", func() {
+				eventLogger.Log(event)
+				Expect(LastWrite).To(HaveSuffix("\n"))
+			})
+
+		})
+	})
+
+	Describe("FluentEventLogger", func() {
+
+		var socketFile = "/tmp/fluent.sock"
+
+		BeforeEach(func() {
+			os.Setenv("FLUENT_SOCKET", socketFile)
+
+			l, err := net.Listen("unix", socketFile)
+			if err != nil {
+				Fail(err.Error())
+			}
+			defer l.Close()
+
+			eventLogger, _ = NewEventLogger(nil)
 		})
 
-		It("Writes a new line", func() {
-			eventLogger.Store(event)
-			Expect(LastWrite).To(HaveSuffix("\n"))
+		AfterEach(func() {
+			os.Remove(socketFile)
+			os.Setenv("FLUENT_SOCKET", "")
+		})
+
+		It("Sets up the fluent logger correctly", func() {
+			fluentLogger := eventLogger.(*FluentEventLogger)
+			Expect(fluentLogger.logger.Config.FluentNetwork).To(Equal("unix"))
+			Expect(fluentLogger.logger.Config.FluentSocketPath).To(Equal(socketFile))
 		})
 
 	})
+
 })

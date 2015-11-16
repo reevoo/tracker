@@ -18,8 +18,13 @@ func main() {
 		SetServerMode("release")
 	}
 
+	logger, err := NewEventLogger(nil)
+	if err != nil {
+		panic(err)
+	}
+
 	server := NewServer(ServerParams{
-		EventStore:  NewEventLogger(nil),
+		EventLogger:  logger,
 		ErrorLogger: SentryErrorLogger{},
 	})
 
