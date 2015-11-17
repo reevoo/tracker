@@ -2,13 +2,15 @@ package tracker_test
 
 import (
 	"bytes"
-        "net/url"
 	"errors"
 	. "github.com/reevoo/tracker"
-	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/ginkgo"
-	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/onsi/gomega"
+	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	"github.com/reevoo/tracker/event"
+	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"testing"
+	"time"
 )
 
 // Testing flag to check if an error is thrown.
@@ -28,7 +30,7 @@ var (
 	LastEvent   event.Event
 )
 
-// Test implementation of EventStore.
+// Test implementation of EventLogger.
 type TestEventLogger struct {
 	ThrowError bool
 }
@@ -36,15 +38,16 @@ type TestEventLogger struct {
 // Flips EventStored.
 func (store TestEventLogger) Log(e interface{}) error {
 	if store.ThrowError {
-		return errors.New("TestEventStoreTriggeredError")
+		return errors.New("TestEventLoggerTriggeredError")
 	}
 
 	EventStored = true
-        LastEvent = e.(event.Event)
+	LastEvent = e.(event.Event)
 	return nil
 }
 
-func EventToParams(event event.Event) string {
+// Creates a URL query from event data
+func eventToParams(event event.Event) string {
 	var buf bytes.Buffer
 	for key, values := range event {
 		for _, value := range values {
@@ -58,113 +61,106 @@ func EventToParams(event event.Event) string {
 	return s[0 : len(s)-1]
 }
 
-var _ = Describe("Server", func() {
+// Performs a GET request.
+func get(server *Server, url string) *httptest.ResponseRecorder {
+	req, _ := http.NewRequest("GET", url, nil)
+	resp := httptest.NewRecorder()
+	server.ServeHTTP(resp, req)
+	return resp
+}
 
-	var (
-		server   Server
-		response *httptest.ResponseRecorder
-		errors   = TestErrorLogger{}
-		logger   = TestEventLogger{}
-	)
-
-	BeforeEach(func() {
-		server = NewServer(ServerParams{
-			ErrorLogger: &errors,
-			EventLogger: &logger,
-		})
+func TestServer(t *testing.T) {
+	var errors = TestErrorLogger{}
+	var logger = TestEventLogger{}
+	var response *httptest.ResponseRecorder
+	var server = NewServer(ServerParams{
+		ErrorLogger: &errors,
+		EventLogger: &logger,
+		Environment: "production",
 	})
 
-	Describe("GET /status", func() {
-		BeforeEach(func() {
+	var eventuallyPollingInterval = 10 * time.Millisecond
+
+	Convey("GET /status", t, func() {
+		Convey("returns HTTP 200", func() {
 			response = get(&server, "/status")
+			So(response.Code, ShouldEqual, 200)
 		})
-
-		It("returns HTTP Status 200", func() {
-			Expect(response.Code).To(Equal(200))
+		Convey("returns a non-empty string", func() {
+			response = get(&server, "/status")
+			So(response.Body.String(), ShouldNotBeNil)
 		})
-
-		It("returns a string", func() {
-			Expect(response.Body.String()).NotTo(BeEmpty())
-		})
-
 	})
 
-	Describe("GET /event", func() {
+	// Asynchronous Tests are implemented based on the discussions on the issue:
+	// https://github.com/smartystreets/goconvey/issues/156
+	Convey("GET /event", t, func() {
+		event := map[string][]string{
+			"name": {"EventName"},
+		}
 
-		var (
-			response *httptest.ResponseRecorder
-			event    event.Event
-			url      string
-		)
+		url := "/event?" + eventToParams(event)
 
-		BeforeEach(func() {
-			event = map[string][]string{
-				"name": []string{"EventName"},
+		Convey("returns HTTP 200", func() {
+			response = get(&server, url)
+			So(response.Code, ShouldEqual, 200)
+		})
+
+		Convey("sends a request to Logger", func(c C) {
+			func() {
+				EventStored = false
+				response = get(&server, url)
+			}()
+
+			select {
+			case <-time.After(eventuallyPollingInterval):
+				c.So(EventStored, ShouldBeTrue)
 			}
-
-			url = "/event?" + EventToParams(event)
 		})
 
-		It("returns HTTP 200", func() {
-			response = get(&server, url)
-			Expect(response.Code).To(Equal(200))
+		Convey("creates an event with a UUID", func(c C) {
+			func() {
+				LastEvent = nil
+				response = get(&server, url)
+			}()
+
+			select {
+			case <-time.After(eventuallyPollingInterval):
+				c.So(LastEvent["id"][0], ShouldNotBeBlank)
+			}
 		})
 
-		It("sends a request to the Event Store when JSON is correct", func() {
-			EventStored = false
-
-			response = get(&server, url)
-
-			Eventually(func() bool {
-				return EventStored
-			}).Should(BeTrue())
-		})
-
-		It("creates an event with a UUID", func() {
-			LastEvent = nil
-
-			response = get(&server, url)
-
-			Eventually(func() interface{} {
-				if LastEvent == nil {
-					return nil
-				}
-				return LastEvent["id"]
-			}).ShouldNot(BeNil())
-		})
-
-		It("ignores any given UUID", func() {
-			LastEvent = nil
-
-			url = url + "&id=ID"
-
-			response = get(&server, url)
-
-			Eventually(func() bool {
-				if LastEvent == nil {
-					return false
-				}
-
-				return LastEvent["id"][0] != "ID"
-			}).Should(BeTrue())
-		})
-
-		It("returns HTTP 400 when no params are given", func() {
+		Convey("returns HTTP 400 when no params are given", func() {
 			response = get(&server, "/event")
-			Expect(response.Code).To(Equal(400))
+			So(response.Code, ShouldEqual, 400)
 		})
 
-		It("tracks an error when the Event Store request fails", func() {
-			logger.ThrowError = true
-			ErrorThrown = false
+		Convey("ignores any given UUID", func(c C) {
+			func() {
+				LastEvent = nil
+				url = url + "&id=ID"
+				response = get(&server, url)
+			}()
 
-			response = get(&server, url)
+			select {
+			case <-time.After(eventuallyPollingInterval):
+				c.So(LastEvent["id"][0], ShouldNotBeBlank)
+				c.So(LastEvent["id"][0], ShouldNotEqual, "ID")
+			}
+		})
 
-			Eventually(func() bool {
-				return ErrorThrown
-			}).Should(BeTrue())
-			logger.ThrowError = false
+		Convey("tracks an error when the Logger request fails", func(c C) {
+			func() {
+				ErrorThrown = false
+				logger.ThrowError = true
+				response = get(&server, url)
+			}()
+
+			select {
+			case <-time.After(eventuallyPollingInterval):
+				c.So(ErrorThrown, ShouldBeTrue)
+				logger.ThrowError = false
+			}
 		})
 	})
-
-})
+}

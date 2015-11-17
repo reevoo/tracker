@@ -4,13 +4,11 @@ import (
 	. "github.com/reevoo/tracker"
 	"github.com/reevoo/tracker/logger"
 	"os"
-	"syscall"
 )
 
 var (
-	dynamoUri           = os.Getenv("DYNAMODB_URI")
-	env                 = os.Getenv("GO_ENV")
-	Term      os.Signal = syscall.SIGTERM
+	dynamoUri = os.Getenv("DYNAMODB_URI")
+	env       = os.Getenv("GO_ENV")
 )
 
 func main() {
