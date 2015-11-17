@@ -14,11 +14,6 @@ var (
 )
 
 func main() {
-	// Release mode reduces the amount of logging.
-	if env == "production" {
-		SetServerMode("release")
-	}
-
 	logger, err := logger.New()
 	if err != nil {
 		panic(err)
@@ -27,6 +22,7 @@ func main() {
 	server := NewServer(ServerParams{
 		EventLogger: logger,
 		ErrorLogger: SentryErrorLogger{},
+		Environment: env,
 	})
 
 	server.Run(":3000")
