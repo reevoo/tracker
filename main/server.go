@@ -8,7 +8,6 @@ import (
 
 var (
 	dynamoUri = os.Getenv("DYNAMODB_URI")
-	env       = os.Getenv("GO_ENV")
 )
 
 func main() {
@@ -20,7 +19,6 @@ func main() {
 	server := NewServer(ServerParams{
 		EventLogger: logger,
 		ErrorLogger: SentryErrorLogger{},
-		Environment: env,
 	})
 
 	server.Run(":3000")

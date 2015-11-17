@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"testing"
 	"time"
 )
@@ -76,10 +77,10 @@ func TestServer(t *testing.T) {
 	var server = NewServer(ServerParams{
 		ErrorLogger: &errors,
 		EventLogger: &logger,
-		Environment: "production",
 	})
 
 	var eventuallyPollingInterval = 10 * time.Millisecond
+	os.Setenv("GIN_MODE", "release")
 
 	Convey("GET /status", t, func() {
 		Convey("returns HTTP 200", func() {

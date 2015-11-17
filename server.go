@@ -18,15 +18,10 @@ type Server struct {
 type ServerParams struct {
 	ErrorLogger ErrorLogger
 	EventLogger logger.Logger
-	Environment string
 }
 
 // Creates a new Server that does no logging.
 func NewServer(params ServerParams) Server {
-	if params.Environment == "production" {
-		gin.SetMode(gin.ReleaseMode)
-	}
-
 	engine := gin.New()
 	return initServer(engine, params)
 }
