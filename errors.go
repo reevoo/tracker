@@ -3,6 +3,7 @@ package tracker
 import (
 	"fmt"
 	"github.com/reevoo/tracker/Godeps/_workspace/src/github.com/getsentry/raven-go"
+	"io"
 	"os"
 )
 
@@ -23,18 +24,20 @@ func (err TrackerError) Error() string {
 }
 
 // Convert a Go error into a TrackerError.
-func NewTrackerErrorFromError(err error, Context map[string]string) TrackerError {
+func NewTrackerErrorFromError(err error, context map[string]string) TrackerError {
 	return TrackerError{
-		Name: err.Error(),
+		Name:    err.Error(),
+		Context: context,
 	}
 }
 
 // Convert a TrackerError to a Map.
 // Useful for JSON-based error logging due to its hierarchy.
 func (err TrackerError) ToMap() map[string]string {
-	all := err.Context
-	all["name"] = err.Name
-	return all
+	if err.Context != nil {
+		err.Context["name"] = err.Name
+	}
+	return err.Context
 }
 
 // EventLoggers keep a log of errors.
@@ -43,19 +46,23 @@ type ErrorLogger interface {
 }
 
 // Sentry is used to log errors.
-type SentryErrorLogger struct{}
+type SentryErrorLogger struct {
+	client interface {
+		CaptureError(err error, tags map[string]string) string
+	}
+}
 
 // Logs an error to Sentry.
-func (SentryErrorLogger) LogError(err TrackerError) {
-	packet := raven.NewPacket(err.Error(), raven.NewException(err, raven.NewStacktrace(2, 3, nil)))
-	raven.Capture(packet, err.ToMap())
+func (s SentryErrorLogger) LogError(err TrackerError) {
+	s.client.CaptureError(err, err.ToMap())
 }
 
 // Logs errors to the console.
-type ConsoleLogger struct{}
+type ConsoleLogger struct {
+	writer io.Writer
+}
 
 // Logs an error to the console.
-func (ConsoleLogger) LogError(err TrackerError) {
-	fmt.Fprintln(os.Stderr, fmt.Sprintf("[ERROR] %s", err.Error()))
-
+func (c ConsoleLogger) LogError(err TrackerError) {
+	c.writer.Write([]byte(fmt.Sprintf("[ERROR] %s", err.Error())))
 }
