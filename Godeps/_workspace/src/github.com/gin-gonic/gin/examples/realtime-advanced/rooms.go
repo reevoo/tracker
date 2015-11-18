@@ -1,6 +1,6 @@
 package main
 
-import "github.com/dustin/go-broadcast"
+import "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/dustin/go-broadcast"
 
 var roomChannels = make(map[string]broadcast.Broadcaster)
 

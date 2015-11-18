@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/manucorporat/stats"
+	"github.com/reevoo/tracker/Godeps/_workspace/src/github.com/manucorporat/stats"
 )
 
 var ips = stats.New()
