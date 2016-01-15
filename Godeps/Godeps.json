@@ -1,14 +1,10 @@
 {
 	"ImportPath": "github.com/reevoo/tracker",
-	"GoVersion": "go1.5.1",
+	"GoVersion": "go1.5",
 	"Packages": [
 		"./..."
 	],
 	"Deps": [
-		{
-			"ImportPath": "github.com/dustin/go-broadcast",
-			"Rev": "3bdf6d4a7164a50bc19d5f230e2981d87d2584f1"
-		},
 		{
 			"ImportPath": "github.com/getsentry/raven-go",
 			"Rev": "d25a363f644decca10856d923980d10555f473e9"
@@ -27,10 +23,6 @@
 			"Rev": "fe6ea2c8e398672518ef204bf0fbd9af858d0e15"
 		},
 		{
-			"ImportPath": "github.com/manucorporat/stats",
-			"Rev": "8f2d6ace262eba462e9beb552382c98be51d807b"
-		},
-		{
 			"ImportPath": "github.com/masahide/fluent-logger-golang/fluent",
 			"Comment": "v1.0.0-8-gc1a5c30",
 			"Rev": "c1a5c3071363fecd38c1582d94b46f5ea1725a82"
@@ -40,18 +32,12 @@
 			"Rev": "40e4aedc8fabf8c23e040057540867186712faa5"
 		},
 		{
+			"ImportPath": "github.com/mattn/go-isatty",
+			"Rev": "7fcbc72f853b92b5720db4a6b8482be612daef24"
+		},
+		{
 			"ImportPath": "github.com/nu7hatch/gouuid",
 			"Rev": "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
-		},
-		{
-			"ImportPath": "github.com/onsi/ginkgo",
-			"Comment": "v1.2.0-22-g39d2c24",
-			"Rev": "39d2c24f8a92c88f7e7f4d8ec6c80d3cc8f5ac65"
-		},
-		{
-			"ImportPath": "github.com/onsi/gomega",
-			"Comment": "v1.0-71-g2152b45",
-			"Rev": "2152b45fa28a361beba9aab0885972323a444e28"
 		},
 		{
 			"ImportPath": "github.com/philhofer/fwd",
@@ -66,11 +52,6 @@
 			"ImportPath": "github.com/smartystreets/goconvey/convey",
 			"Comment": "1.5.0-437-ga29728e",
 			"Rev": "a29728e4d70bb23e436d03bee49b1793e70a9352"
-		},
-		{
-			"ImportPath": "github.com/stretchr/testify/assert",
-			"Comment": "v1.0-12-g7e4a149",
-			"Rev": "7e4a149930b09fe4c2b134c50ce637457ba6e966"
 		},
 		{
 			"ImportPath": "github.com/tinylib/msgp/msgp",

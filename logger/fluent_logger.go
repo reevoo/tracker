@@ -1,7 +1,7 @@
 package logger
 
 import (
-	"github.com/reevoo/tracker/Godeps/_workspace/src/github.com/masahide/fluent-logger-golang/fluent"
+	"github.com/masahide/fluent-logger-golang/fluent"
 )
 
 type FluentLogger struct {

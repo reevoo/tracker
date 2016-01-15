@@ -1,7 +1,7 @@
 package logger
 
 import (
-	. "github.com/reevoo/tracker/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
+	. "github.com/smartystreets/goconvey/convey"
 	"net"
 	"os"
 	"testing"

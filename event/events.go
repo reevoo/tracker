@@ -1,7 +1,7 @@
 package event
 
 import (
-	"github.com/reevoo/tracker/Godeps/_workspace/src/github.com/nu7hatch/gouuid"
+	"github.com/nu7hatch/gouuid"
 )
 
 // An Event is a structure holding information

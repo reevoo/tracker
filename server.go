@@ -1,7 +1,7 @@
 package tracker
 
 import (
-	"github.com/reevoo/tracker/Godeps/_workspace/src/github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin"
 	"github.com/reevoo/tracker/event"
 	"github.com/reevoo/tracker/logger"
 	"net/http"
