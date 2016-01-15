@@ -2,6 +2,8 @@ package tracker
 
 import (
 	"github.com/reevoo/tracker/Godeps/_workspace/src/github.com/gin-gonic/gin"
+	"github.com/reevoo/tracker/event"
+	"github.com/reevoo/tracker/logger"
 	"net/http"
 )
 
@@ -9,17 +11,13 @@ import (
 type Server struct {
 	engine      *gin.Engine
 	errorLogger ErrorLogger
-	eventStore  EventStore
+	eventLogger logger.Logger
 }
 
 // Parameters passed to NewServer().
 type ServerParams struct {
 	ErrorLogger ErrorLogger
-	EventStore  EventStore
-}
-
-func SetServerMode(mode string) {
-	gin.SetMode(mode)
+	EventLogger logger.Logger
 }
 
 // Creates a new Server that does no logging.
@@ -32,7 +30,7 @@ func initServer(engine *gin.Engine, params ServerParams) Server {
 	server := Server{
 		engine:      engine,
 		errorLogger: params.ErrorLogger,
-		eventStore:  params.EventStore,
+		eventLogger: params.EventLogger,
 	}
 
 	// Build the engine
@@ -77,22 +75,22 @@ func (server Server) getStatus(context *gin.Context) {
 func (server Server) trackEvent(context *gin.Context) {
 	// Ensure the JSON is valid before returning
 	// context.BindJSON() sets an error status to the context on failure.
-	var event = NewEvent(
+	var e = event.New(
 		context.Request.URL.Query(),
 	)
 
-	if event.Empty() {
+	if e.Empty() {
 		context.String(http.StatusBadRequest, "No event params given.")
 	} else {
 		// We return the HTTP request quickly
 		// and process the event in the background.
-		go server.storeEvent(event)
+		go server.storeEvent(e)
 		context.String(http.StatusOK, "")
 	}
 }
 
-func (server Server) storeEvent(event Event) {
-	err := server.eventStore.Store(event)
+func (server Server) storeEvent(e event.Event) {
+	err := server.eventLogger.Log(e)
 
 	if err != nil {
 		server.errorLogger.LogError(TrackerError{
